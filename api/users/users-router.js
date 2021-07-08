@@ -9,13 +9,19 @@ const Post = require("../posts/posts-model");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", (req, res, next) => {
   // RETURN AN ARRAY WITH ALL THE USERS
+  User.get()
+    .then((users) => {
+      res.json(users);
+    })
+    .catch(next);
 });
 
 router.get("/:id", validateUserId, (req, res) => {
   // RETURN THE USER OBJECT
   // this needs a middleware to verify user id
+  res.json(req.user);
 });
 
 router.post("/", validateUserId, validateUser, (req, res, next) => {
@@ -69,6 +75,14 @@ router.post("/:id/posts", validateUserId, validateUser, validatePost, (req, res,
       res.status(201).json(post);
     })
     .catch(next);
+});
+
+router.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    customMessage: "something tragic inside posts router happned",
+    message: err.message,
+    stack: err.stack,
+  });
 });
 
 // do not forget to export the router
