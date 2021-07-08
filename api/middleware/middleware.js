@@ -2,13 +2,30 @@ const User = require("../users/users-model");
 const Post = require("../posts/posts-model");
 
 function logger(req, res, next) {
-  console.log(`req method, ${req.method}`), console.log(`req URL, ${req.url}`), console.log(`timestamp, ${timestamp}`);
-  req.foo = "web 43 is Awesome";
+  const timestamp = new Date().toLocaleString();
+  const method = req.method;
+  const url = req.originalUrl;
+  console.log(`[${timestamp}] ${method} to ${url}`);
   next();
 }
 
-function validateUserId(req, res, next) {
+async function validateUserId(req, res, next) {
   // DO YOUR MAGIC
+  try {
+    const user = await User.getById(req.params.id);
+    if (!user) {
+      res.status(404).json({
+        message: "no such user",
+      });
+    } else {
+      req.user = user;
+      next();
+    }
+  } catch (err) {
+    res.status(404).json({
+      message: "no such user",
+    });
+  }
 }
 
 function validateUser(req, res, next) {
