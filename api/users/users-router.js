@@ -36,10 +36,18 @@ router.post("/", validateUserId, validateUser, (req, res, next) => {
     });
 });
 
-router.put("/:id", validateUserId, validateUser, (req, res) => {
+router.put("/:id", validateUserId, validateUser, (req, res, next) => {
   // RETURN THE FRESHLY UPDATED USER OBJECT
   // this needs a middleware to verify user id
   // and another middleware to check that the request body is valid
+  User.update(req.params.id, { name: req.name })
+    .then(() => {
+      return User.getById(req.params.id);
+    })
+    .then((user) => {
+      res.json(user);
+    })
+    .catch(next);
 });
 
 router.delete("/:id", validateUserId, (req, res, next) => {
@@ -47,7 +55,7 @@ router.delete("/:id", validateUserId, (req, res, next) => {
   // this needs a middleware to verify user id
 
   User.remove(req.params.id)
-    .then((post) => {
+    .then(() => {
       res.json(req.user);
     })
     .catch(next);
@@ -63,19 +71,29 @@ router.get("/:id/posts", validateUserId, (req, res, next) => {
     .catch(next);
 });
 
-router.post("/:id/posts", validateUserId, validateUser, validatePost, (req, res, next) => {
+router.post("/:id/posts", validateUserId, validateUser, validatePost, async (req, res, next) => {
   // RETURN THE NEWLY CREATED USER POST
   // this needs a middleware to verify user id
   // and another middleware to check that the request body is valid
-  Post.insert({
-    user_id: req.params.id,
-    text: req.body.text,
-  })
-    .then((post) => {
-      res.status(201).json(post);
-    })
-    .catch(next);
+  try {
+    const result = await Post.insert({
+      user_id: req.params.id,
+      text: req.text,
+    });
+    res.status(201);
+  } catch (err) {
+    next(err);
+  }
 });
+//   Post.insert({
+//     user_id: req.params.id,
+//     text: req.body.text,
+//   })
+//     .then((post) => {
+//       res.status(201).json(post);
+//     })
+//     .catch(next);
+// });
 
 router.use((err, req, res, next) => {
   res.status(err.status || 500).json({
